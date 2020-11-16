@@ -4,9 +4,10 @@ import datetime
 import threading
 from tkinter import *
 from tkinter import ttk
+from copy import copy
 from tkinter import messagebox
 from cybercafe_db import User, Staff, Machine
-from PIL import ImageTk, Image
+from PIL import ImageTk, Image, ImageDraw, ImageFont
 from ttkthemes import themed_tk as tk
 
 
@@ -162,7 +163,7 @@ def create_tab(nb, heading, lbl_id, curr_frame):
     l1 = ttk.Label(header_frame, text=heading, font="Helvetica 26 bold italic")
 
     photo1 = ImageTk.PhotoImage(Image.open("images/logout_icon.png"))
-    back_btn = ttk.Button(header_frame, image=photo1, command=lambda: back(curr_frame, nb))
+    back_btn = ttk.Button(header_frame, image=photo1, command=lambda: back(curr_frame, nb, True))
     back_btn.image = photo1
     create_tool_tip(back_btn, "Logout")
 
@@ -600,9 +601,22 @@ def clear_screen(nb, tree, entry):
 
 
 # NOTE: COMMAND FUNCTIONS
-def back(prev_frame, curr_frame):
-    curr_frame.pack_forget()
-    prev_frame.pack(fill=BOTH, expand=1)
+def back(prev_frame, curr_frame, staff_logged_out=False):
+
+    if staff_logged_out:
+        confirm = messagebox.askyesno(title="Logout Confirmation!", message="Are you sure you want to logout?")
+        if not confirm:
+            return
+
+    if curr_frame == home_frame:
+        curr_frame.place_forget()
+    else:
+        curr_frame.pack_forget()
+
+    if prev_frame == home_frame:
+        prev_frame.place(x=0, y=0)
+    else:
+        prev_frame.pack(fill=BOTH, expand=1)
 
 
 def add_machine(nb, tree, update=False):
@@ -764,7 +778,11 @@ def sign_up(nb, tree, update=False):
 
     if type(obj) == User:
         membership_lbl = ttk.Label(reg_frame, text="Membership Period :")
-        membership_options = ["12 months", "6 months", "3 months", "1 month", "0 months"]
+        membership_options = [f"12 months (Rs. {sec_deposit['12 months']})",
+                              f"6 months (Rs. {sec_deposit['6 months']})",
+                              f"3 months (Rs. {sec_deposit['3 months']})",
+                              f"1 month (Rs. {sec_deposit['1 month']})",
+                              f"0 months (Rs. {sec_deposit['0 months']})"]
         if update:
             membership = tree.selection()[0]
             membership = tree.item(membership, 'values')[6]
@@ -806,7 +824,7 @@ def sign_up(nb, tree, update=False):
 
 
 def user_logged_out(curr_frame, widget, email):
-    confirm = messagebox.askokcancel(title="Logout Confirmation!", message="Are you sure you want to logout?")
+    confirm = messagebox.askyesno(title="Logout Confirmation!", message="Are you sure you want to logout?")
     if confirm:
         time.sleep(0.1)
         global logged_out
@@ -821,7 +839,8 @@ def user_logged_out(curr_frame, widget, email):
 
         if balance > 0:
             messagebox.showinfo(title="Successfully Logged Out!", message=f"Your Usage Time is: {widget['text']}"
-                                                                          f"\nFees incurred is: Rs. {fees}")
+                                                                          f"\nFees incurred is: Rs. {fees}"
+                                                                          f"\nCurrent Balance is: Rs. {balance}")
         elif balance < 0:
             messagebox.showwarning(title="Logout Failed!!", message=f"Your usage has exceeded the Security Deposit by Rs. "
                                                                     f"{-balance}.\nPlease clear your due by contacting staff!")
@@ -1009,11 +1028,11 @@ def staff_log_in(curr_frame):
     staff_login_frame = ttk.Frame(root)
     staff_login_frame.pack(fill=BOTH, expand=1)
 
-    title_lbl = ttk.Label(staff_login_frame, text="Sign-In!", font="Helvetica 28 bold italic")
-    title_lbl.pack(padx=10, pady=10)
+    title_lbl = ttk.Label(staff_login_frame, text="Sign-In!", font="Helvetica 30 bold italic")
+    title_lbl.pack(padx=20, pady=20)
 
     temp_frame = ttk.Frame(staff_login_frame)
-    temp_frame.pack(padx=20, pady=20)
+    temp_frame.pack(padx=20, pady=(30,20))
 
     email_lbl = ttk.Label(temp_frame, text="Email-ID :")
     password_lbl = ttk.Label(temp_frame, text="Password :")
@@ -1076,19 +1095,25 @@ if __name__ == '__main__':
     root.geometry(f"{app_width}x{app_height}+{x}+{y-40}")
 
     # gui window content
-    home_frame = ttk.Frame(root)
-    home_frame.pack(fill=BOTH, expand=1)
-    heading_lbl = ttk.Label(home_frame, text="WELCOME TO \nABC CYBER CAFE !",
-                            font="Helvetica 40 bold italic", justify=CENTER)
-    heading_lbl.pack(padx=10, pady=10)
+    bg_img = Image.open(r"images\cybercafe_img.png")
+    img2 = Image.open(r"images\white_bg.png").convert("RGBA")
+    bg_img = Image.blend(bg_img, img2, 0.35).convert("RGBA")
+    draw = ImageDraw.Draw(bg_img)
+    font1 = ImageFont.truetype(r"fonts\Bungee-Inline.otf", 54)
+    points = 120, 10
+    label = "WELCOME TO\n1NET CYBER CAFE!"
+    color = "#2bff00"
+    draw.text(points, label, color, font=font1, align="center")
+    bg_img = ImageTk.PhotoImage(bg_img)
 
-    btn_frame = ttk.Frame(home_frame)
-    btn_frame.pack(padx=20, pady=20)
+    home_frame = Canvas(root, relief=FLAT, background="black", width=app_width, height=app_height)
+    home_frame.place(x=0, y=0)
+    home_frame.create_image(0, 0, image=bg_img, anchor=NW)
 
-    user_login_btn = ttk.Button(btn_frame, text="USER LOGIN", command=lambda: user_log_in(home_frame))
-    staff_login_btn = ttk.Button(btn_frame, text="STAFF LOGIN", command=lambda: staff_log_in(home_frame))
+    user_login_btn = ttk.Button(root, text="USER LOGIN", command=lambda: user_log_in(home_frame))
+    staff_login_btn = ttk.Button(root, text="STAFF LOGIN", command=lambda: staff_log_in(home_frame))
 
-    user_login_btn.grid(row=0, column=0, padx=10, pady=10)
-    staff_login_btn.grid(row=0, column=1, padx=10, pady=10)
+    user_login_btn.place(x=240, y=200)
+    staff_login_btn.place(x=400, y=200)
 
     root.mainloop()
