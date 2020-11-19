@@ -4,7 +4,6 @@ import datetime
 import threading
 from tkinter import *
 from tkinter import ttk
-from copy import copy
 from tkinter import messagebox
 from cybercafe_db import User, Staff, Machine
 from PIL import ImageTk, Image, ImageDraw, ImageFont
@@ -278,7 +277,6 @@ def create_tab(nb, heading, lbl_id, curr_frame):
 
 
 def get_selected_row(tree, entry):
-
     try:
         selection = tree.selection()[0]
         email = tree.item(selection, 'values')[0]
@@ -462,7 +460,7 @@ def register(nb, obj, vals, email_txt=None, update=False):
                 vals[key].delete(0, END)
 
             if type(obj) == User:
-                vals["Membership"].set("12 month")
+                vals["Membership"].set(f"12 months (Rs. {sec_deposit['12 months']})")
         else:
             messagebox.showerror(title="Registration Failed!!",
                                  message="The given Email-Id already exists!!")
@@ -528,13 +526,15 @@ def search(nb, tree, entry):
     obj = get_object(nb)
     primary_key = entry.get()
 
+    if primary_key == "":
+        return
+
     record = obj.search_data(primary_key)
 
-    clear_screen(nb, tree, entry)
-
     if len(record) != 0:
+        clear_screen(nb, tree, entry)
         tree.insert(parent='', index='end', iid=0, text="", values=record[0], tags=('evenrow',))
-    elif entry.get() != "":
+    else:
         messagebox.showwarning(title="No Record Found",
                                message=f"There is no such record corresponding to email '{entry.get()}' !!")
         return

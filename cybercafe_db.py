@@ -48,13 +48,14 @@ class User(Base, Date):
         date = vals["Join Date"].get()
         day = self.findDay(date)
         sec_deposit = {"0 months": "20", "1 month": "2000", "3 months": "5000", "6 months": "9500", "12 months": "18000"}
-        sec_dep = sec_deposit[vals["Membership"].get()]
+        mem_pd = ' '.join(map(str, vals["Membership"].get().split(' ')[:2]))
+        sec_dep = sec_deposit[mem_pd]
 
         cur.execute(''' INSERT INTO Users
                     (Email, Name, ContactNo, Password, JoinDate, JoinDay, MembershipPeriod, Security, Balance)
                     VALUES(?,?,?,?,?,?,?,?,?) ''',
                     (vals["Email"].get(), vals["Name"].get(), vals["Contact Number"].get(), vals["Password"].get(),
-                     date, day, vals["Membership"].get(), sec_dep, sec_dep)
+                     date, day, mem_pd, sec_dep, sec_dep)
                     )
 
         dbase.commit()
