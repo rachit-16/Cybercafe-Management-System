@@ -1096,7 +1096,7 @@ if __name__ == '__main__':
 
     # gui window content
     bg_img = Image.open(r"images\cybercafe_img.png")
-    img2 = Image.open(r"images\white_bg.png").convert("RGBA")
+    img2 = Image.open(r"images\black_filter.png").convert("RGBA")
     bg_img = Image.blend(bg_img, img2, 0.35).convert("RGBA")
     draw = ImageDraw.Draw(bg_img)
     font1 = ImageFont.truetype(r"fonts\Bungee-Inline.otf", 54)
